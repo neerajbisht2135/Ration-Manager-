@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>अल्टीमेट मंथली राशन मैनेजर</title>
+    <style>
+        :root {
+            --primary: #27ae60;
+            --primary-dark: #219653;
+            --secondary: #2980b9;
+            --canteen-color: #8e44ad;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #ddd;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 10px; color: var(--text-color); }
+        .container { max-width: 900px; margin: auto; background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        
+        h1 { text-align: center; color: #2c3e50; font-size: 22px; margin-bottom: 15px; }
+        h2 { font-size: 16px; color: #34495e; margin-top: 15px; border-bottom: 2px solid var(--primary); padding-bottom: 5px; }
+        h2.canteen-title { border-bottom-color: var(--canteen-color); color: var(--canteen-color); }
+
+        .tabs { display: flex; gap: 4px; margin-bottom: 15px; background: #e2e8f0; padding: 4px; border-radius: 8px; }
+        .tab-btn { flex: 1; padding: 10px 4px; border: none; background: transparent; cursor: pointer; font-weight: bold; font-size: 13px; border-radius: 6px; color: #555; text-align: center; }
+        .tab-btn.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .form-group { margin-bottom: 8px; }
+        label { display: block; margin-bottom: 2px; font-weight: bold; font-size: 11px; color: #555; }
+        select, input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: #fff; }
+        .row { display: flex; gap: 8px; margin-bottom: 6px; }
+        .row .form-group { flex: 1; margin-bottom: 0; }
+
+        .category-large { font-size: 15px; padding: 8px; font-weight: bold; background: #f0fdf4; border-color: #27ae60; color: #166534; }
+
+        .sticky-input-section {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 100;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .sticky-stock-header {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 100;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        button { background-color: var(--primary); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 6px; font-size: 15px; width: 100%; margin-top: 5px; font-weight: bold; transition: background 0.2s; }
+        button:hover { background-color: var(--primary-dark); }
+        
+        .btn-secondary { background-color: var(--secondary); margin-top: 8px; }
+        .btn-whatsapp { background-color: #25D366; margin-top: 8px; }
+        .btn-danger { background-color: #c0392b; padding: 6px 10px; font-size: 12px; width: auto; border-radius: 4px; }
+        .btn-warning { background-color: #f39c12; padding: 6px 10px; font-size: 12px; width: auto; border-radius: 4px; color: white; }
+        .btn-success { background-color: var(--primary); margin-top: 15px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+        th, td { border: 1px solid var(--border-color); padding: 8px 4px; text-align: center; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        
+        .section { margin-top: 20px; border-top: 1px solid #edf2f7; padding-top: 15px; }
+        .backup-section { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .backup-section button { flex: 1; min-width: 140px; }
+        
+        .checked-row { text-decoration: line-through; color: #94a3b8; background-color: #f8fafc; }
+        .bill-preview { max-width: 100%; height: auto; margin-top: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: none; }
+
+        /* एकदम सही और साफ़ A4 प्रिंट सेटिंग */
+        @media print {
+            body { background-color: #fff; padding: 0; margin: 0; }
+            .container { max-width: 100% !important; width: 100% !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+            
+            /* सभी फालतू कंट्रोल्स, बटन, फॉर्म, बिल सेक्शन और मेंटेनेंस छिपाएं */
+            h1, .row, .tabs, .sticky-input-section, .sticky-stock-header, button, .form-group, .backup-section, input, select, .form-section, div:has(#billImageInput), div:has(#stockBillInput), .backup-section { display: none !important; }
+            
+            /* केवल सक्रिय टैब और उसके भीतर की टेबल्स व हेडिंग्स दिखेंगी */
+            #shoppingTab.active, #stockTab.active { display: block !important; }
+            #shoppingTab.active h2, #shoppingTab.active table, #shoppingTab.active tr, #shoppingTab.active th, #shoppingTab.active td,
+            #stockTab.active h2, #stockTab.active table, #stockTab.active tr, #stockTab.active th, #stockTab.active td { display: block !important; }
+
+            table { width: 100% !important; border-collapse: collapse !important; display: table !important; margin-bottom: 10px !important; }
+            tr { display: table-row !important; }
+            th, td { display: table-cell !important; border: 1px solid #000 !important; padding: 5px !important; color: #000 !important; font-size: 12px !important; }
+            th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+
+            /* प्रिंट में केवल जरूरी कॉलम (टिक, कीमत, स्थिति, हटाएं आदि छिपाए गए हैं) */
+            #shoppingTab.active th:nth-child(1), #shoppingTab.active td:nth-child(1),
+            #shoppingTab.active th:nth-child(5), #shoppingTab.active td:nth-child(5),
+            #shoppingTab.active th:nth-child(6), #shoppingTab.active td:nth-child(6),
+            #shoppingTab.active th:nth-child(7), #shoppingTab.active td:nth-child(7) { display: none !important; }
+
+            #stockTab.active th:nth-child(3), #stockTab.active td:nth-child(3),
+            #stockTab.active th:nth-child(4), #stockTab.active td:nth-child(4),
+            #stockTab.active th:last-child, #stockTab.active td:last-child { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>अल्टीमेट मंथली राशन मैनेजर</h1>
+
+    <div class="row">
+        <div class="form-group">
+            <label for="currentMonth">रजिस्टर / महीना चुनें:</label>
+            <select id="currentMonth" onchange="changeMonth()">
+                <option value="August_2026">अगस्त 2026</option>
+                <option value="September_2026" selected>सितंबर 2026</option>
+                <option value="October_2026">अक्टूबर 2026</option>
+                <option value="November_2026">नवंबर 2026</option>
+                <option value="December_2026">दिसंबर 2026</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="shoppingDate">खरीददारी की तारीख (Date):</label>
+            <input type="date" id="shoppingDate" onchange="saveDate()">
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('shoppingTab', true)">शॉपिंग लिस्ट</button>
+        <button class="tab-btn" onclick="switchTab('stockTab', true)">घर का स्टॉक</button>
+        <button class="tab-btn" onclick="switchTab('maintenanceTab', true)">मेंटेनेंस व बैकअप</button>
+    </div>
+
+    <div id="shoppingTab" class="tab-content active">
+        
+        <!-- स्टिकी इनपुट सेक्शन -->
+        <div class="sticky-input-section">
+            <h2 style="margin-top: 5px; margin-bottom: 8px;">बाजार से लाने वाला सामान</h2>
+
+            <div class="form-group">
+                <label for="itemCategory">1. श्रेणी चुनें:</label>
+                <select id="itemCategory" class="category-large" onchange="onCategoryChange()">
+                    <option value="" disabled selected>-- श्रेणी चुनें --</option>
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="form-group" style="flex: 2;">
+                    <label for="itemName">2. सामान चुनें:</label>
+                    <select id="itemName" style="font-weight: bold; background: #fffbeb; border-color: #f59e0b;" onchange="onItemNameChange()">
+                        <option value="" disabled selected>-- पहले श्रेणी चुनें --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="itemQty">मात्रा:</label>
+                    <input type="number" id="itemQty" step="any" placeholder="जैसे: 1" value="1">
+                </div>
+                <div class="form-group" style="flex: 1.2;">
+                    <label for="itemUnit">यूनिट:</label>
+                    <select id="itemUnit">
+                        <option value="किलो">किलो (Kg)</option>
+                        <option value="ग्राम">ग्राम (g)</option>
+                        <option value="लीटर">लीटर (L)</option>
+                        <option value="पैकेट">पैकेट (Pkt)</option>
+                        <option value="पीस">पीस (Pcs)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="addShoppingItem()" style="margin-top: 4px;">शॉपिंग लिस्ट में जोड़ें</button>
+        </div>
+        <!-- स्टिकी हिस्सा समाप्त -->
+
+        <div class="section">
+            <div class="printable-quarter">
+                <h2>अनाज</h2>
+                <table>
+                    <thead>
+                        <tr><th style="width: 30px;">टिक</th><th>श्रेणी</th><th>सामान</th><th>मात्रा</th><th>कीमत (₹)</th><th>स्थिति</th><th>हटाएं</th></tr>
+                    </thead>
+                    <tbody id="groceryTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="printable-quarter">
+                <h2>दालें</h2>
+                <table>
+                    <thead>
+                        <tr><th style="width: 30px;">टिक</th><th>श्रेणी</th><th>सामान</th><th>मात्रा</th><th>कीमत (₹)</th><th>स्थिति</th><th>हटाएं</th></tr>
+                    </thead>
+                    <tbody id="generalTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="printable-quarter" style="clear: both;">
+                <h2 class="canteen-title">कैंटीन</h2>
+                <table>
+                    <thead>
+                        <tr><th style="width: 30px;">टिक</th><th>श्रेणी</th><th>सामान</th><th>मात्रा</th><th>कीमत (₹)</th><th>स्थिति</th><th>हटाएं</th></tr>
+                    </thead>
+                    <tbody id="canteenTableBody"></tbody>
+                </table>
+            </div>
+            
+            <div class="form-section" style="clear: both; margin-top: 15px;">
+                <button class="btn-secondary" onclick="window.print()">🖨️ A4 प्रिंट निकालें</button>
+                <button class="btn-whatsapp" onclick="shareShoppingWhatsApp()">💬 WhatsApp पर शेयर करें</button>
+            </div>
+
+            <!-- बिल अपलोड सेक्शन और कुल खर्च का डिस्प्ले -->
+            <div class="section" style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+                <h2>🧾 इस महीने के बिल / पर्ची की फोटो जोड़ें</h2>
+                
+                <input type="file" accept="image/*" id="billImageInput" onchange="previewBillImage(event)">
+                <div id="billActionBox" style="margin-top: 8px; display: none;">
+                    <button class="btn-danger" onclick="deleteBillImage()" style="width: auto; padding: 6px 12px; font-size: 13px;">🗑️ बिल की फोटो हटाएं / बदलें</button>
+                </div>
+                <br>
+                <img id="billPreview" class="bill-preview" alt="बिल की फोटो">
+
+                <!-- कुल खर्च का डिस्प्ले (केवल खरीदे गए सामानों का) -->
+                <div style="margin-top: 15px; background: #e0f2fe; padding: 12px; border-radius: 6px; text-align: center; border: 1px solid #bae6fd;">
+                    <span style="font-size: 14px; color: #0369a1; font-weight: bold;">📊 कुल वास्तविक खर्च (खरीदे गए सामानों का):</span>
+                    <p id="totalExpenseDisplay" style="margin: 5px 0 0; font-size: 18px; font-weight: bold; color: #0f172a;">₹0</p>
+                </div>
+            </div>
+            
+            <button class="btn-success" onclick="transferToStock()">✅ खरीदे गए सामान और बिल स्टॉक में जोड़ें!</button>
+        </div>
+    </div>
+
+    <div id="stockTab" class="tab-content">
+        <!-- स्टॉक पेज पर सर्च बार तक का हिस्सा फ्रीज करने के लिए -->
+        <div class="sticky-stock-header">
+            <h2>घर पर उपलब्ध स्टॉक लिस्ट</h2>
+            <input type="text" id="searchInput" placeholder="🔍 स्टॉक में सामान खोजें..." onkeyup="renderStockTable()">
+        </div>
+
+        <table style="margin-top: 10px;" id="stockTableElement">
+            <thead>
+                <tr>
+                    <th>सामान</th>
+                    <th>श्रेणी</th>
+                    <th>बचा हुआ स्टॉक</th>
+                    <th>नया आया सामान</th>
+                    <th>कुल मात्रा</th>
+                    <th>हटाएं</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody"></tbody>
+        </table>
+
+        <!-- स्टॉक टैब के नीचे प्रिंट और व्हाट्सएप शेयर विकल्प -->
+        <div class="form-section" style="margin-top: 15px;">
+            <button class="btn-secondary" onclick="window.print()">🖨️ स्टॉक का A4 प्रिंट निकालें</button>
+            <button class="btn-whatsapp" onclick="shareStockWhatsApp()">💬 WhatsApp पर स्टॉक शेयर करें</button>
+        </div>
+
+        <!-- स्टॉक टैब में बिल अपलोड और डिलीट करने का नया सेक्शन -->
+        <div class="section" style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #cbd5e1; margin-top: 20px;">
+            <h2>🧾 स्टॉक का बिल / पर्ची मैनेजमेंट</h2>
+            <input type="file" accept="image/*" id="stockBillInput" onchange="previewStockBillImage(event)">
+            <div id="stockBillActionBox" style="margin-top: 8px; display: none;">
+                <button class="btn-danger" onclick="deleteStockBillImage()" style="width: auto; padding: 6px 12px; font-size: 13px;">🗑️ स्टॉक का बिल हटाएं / बदलें</button>
+            </div>
+            <br>
+            <img id="savedBillView" class="bill-preview" alt="इस महीने का कोई बिल सेव नहीं है।">
+        </div>
+    </div>
+
+    <div id="maintenanceTab" class="tab-content">
+        <div class="section" style="margin-top: 0; border-top: none;">
+            <h2>⚙️ मेंटेनेंस व बैकअप</h2>
+
+            <!-- श्रेणी और सामान मैनेजमेंट सेक्शन -->
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
+                <h3 style="margin-top: 0; font-size: 14px; color: #2c3e50;">🛠️ श्रेणी और सामान नियंत्रण केंद्र</h3>
+                
+                <div class="form-group">
+                    <label for="newCategoryInput">1. नई श्रेणी जोड़ें:</label>
+                    <input type="text" id="newCategoryInput" placeholder="जैसे: डेयरी">
+                    <button class="btn-secondary" onclick="addNewCategory()" style="margin-top: 4px; padding: 6px; font-size: 13px;">नई श्रेणी बनाएँ</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                    <label for="editCategorySelect">2. श्रेणी एडिट या डिलीट करें:</label>
+                    <select id="editCategorySelect" onchange="onEditCategorySelectChange()"></select>
+                </div>
+                <div class="row" style="margin-top: 4px;">
+                    <div class="form-group" style="flex: 2;"><input type="text" id="renameCategoryInput" placeholder="श्रेणी का नया नाम"></div>
+                    <div class="form-group" style="flex: 1;"><button onclick="renameCategory()" class="btn-warning" style="margin-top:0; padding:8px; font-size:12px;">नाम बदलें</button></div>
+                    <div class="form-group" style="flex: 1;"><button onclick="deleteCategory()" class="btn-danger" style="margin-top:0; padding:8px; font-size:12px; width:100%;">श्रेणी हटाएं</button></div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 12px 0;">
+
+                <div class="form-group">
+                    <label for="targetCategorySelect">3. सामान प्रबंधित करने हेतु श्रेणी चुनें:</label>
+                    <select id="targetCategorySelect" onchange="onMaintenanceCategoryChange()"></select>
+                </div>
+                <div class="form-group">
+                    <label for="newItemNameInput">4. सामान का नाम (नया या एडिट हेतु):</label>
+                    <input type="text" id="newItemNameInput" placeholder="सामान का नाम लिखें">
+                </div>
+                <div class="form-group">
+                    <label for="newItemUnitSelect">5. डिफ़ॉल्ट यूनिट:</label>
+                    <select id="newItemUnitSelect">
+                        <option value="किलो">किलो (Kg)</option>
+                        <option value="ग्राम">ग्राम (g)</option>
+                        <option value="लीटर">लीटर (L)</option>
+                        <option value="पैकेट">पैकेट (Pkt)</option>
+                        <option value="पीस">पीस (Pcs)</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button onclick="addNewItemToCategory()" style="flex: 1; font-size: 13px;">नया सामान जोड़ें</button>
+                    <button onclick="updateExistingItem()" class="btn-warning" style="flex: 1; font-size: 13px;">सामान अपडेट करें</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 12px;">
+                    <label for="maintenanceItemList">6. इस श्रेणी के मौजूदा सामान:</label>
+                    <select id="maintenanceItemList" size="4" style="height: 90px;" onchange="onMaintenanceItemSelect()"></select>
+                </div>
+                <button onclick="deleteSelectedItem()" class="btn-danger" style="margin-top: 4px; font-size: 13px; width: 100%;">चयनित सामान डिलीट करें</button>
+            </div>
+
+            <div class="backup-section" style="flex-direction: column;">
+                <button class="btn-secondary" onclick="exportJSON()">📥 संपूर्ण डेटा डाउनलोड करें (Backup)</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+                <button class="btn-secondary" onclick="document.getElementById('importFile').click()">📤 डेटा अपलोड कर रीस्टोर करें (Restore)</button>
+                <button class="btn-danger" onclick="clearCurrentMonthData()" style="width: 100%; margin-top: 5px;">⚠️ वर्तमान महीने का डेटा साफ़ करें (Clear Current Month)</button>
+                <button class="btn-danger" onclick="clearAllAppData()" style="width: 100%; margin-top: 5px; background-color: #990000;">🚨 संपूर्ण ऐप का डेटा साफ़ करें (Clear All Data)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // बिल्कुल पुरानी और सटीक सादी श्रेणियां (बिना लंबे नाम या फालतू आइकॉन के)
+    const defaultCategoryItemsMap = {
+        "अनाज": [
+            { name: "गेहूं का आटा", defaultUnit: "किलो" },
+            { name: "चावल (बासमती)", defaultUnit: "किलो" },
+            { name: "चावल (सादा दैनिक)", defaultUnit: "किलो" },
+            { name: "दलिया", defaultUnit: "किलो" },
+            { name: "मैदा", defaultUnit: "किलो" },
+            { name: "सूजी", defaultUnit: "किलो" },
+            { name: "पोहा", defaultUnit: "किलो" },
+            { name: "मक्के का आटा", defaultUnit: "किलो" },
+            { name: "ओट्स", defaultUnit: "पैकेट" },
+            { name: "मल्टीग्रेन आटा", defaultUnit: "किलो" },
+            { name: "ब्रेड / पाव", defaultUnit: "पैकेट" }
+        ],
+        "दालें": [
+            { name: "अरहर दाल", defaultUnit: "किलो" },
+            { name: "मूंग दाल (धुली)", defaultUnit: "किलो" },
+            { name: "मूंग छिलका दाल", defaultUnit: "किलो" },
+            { name: "उड़द दाल (धुली)", defaultUnit: "किलो" },
+            { name: "उड़द साबुत", defaultUnit: "किलो" },
+            { name: "चना दाल", defaultUnit: "किलो" },
+            { name: "मसूर दाल", defaultUnit: "किलो" },
+            { name: "काबुली चना", defaultUnit: "किलो" },
+            { name: "काला चना", defaultUnit: "किलो" },
+            { name: "राजमा", defaultUnit: "किलो" },
+            { name: "लोबिया", defaultUnit: "किलो" },
+            { name: "साबुत मूंग", defaultUnit: "किलो" },
+            { name: "बेसन", defaultUnit: "किलो" },
+            { name: "सोया चंक्स", defaultUnit: "पैकेट" }
+        ],
+        "मसाले": [
+            { name: "नमक सादा", defaultUnit: "किलो" },
+            { name: "सेंधा नमक", defaultUnit: "किलो" },
+            { name: "काला नमक", defaultUnit: "ग्राम" },
+            { name: "हल्दी पाउडर", defaultUnit: "ग्राम" },
+            { name: "धनिया पाउडर", defaultUnit: "ग्राम" },
+            { name: "लाल मिर्च पाउडर", defaultUnit: "ग्राम" },
+            { name: "कश्मीरी लाल मिर्च", defaultUnit: "ग्राम" },
+            { name: "जीरा", defaultUnit: "ग्राम" },
+            { name: "राई", defaultUnit: "ग्राम" },
+            { name: "सौफ", defaultUnit: "ग्राम" },
+            { name: "गरम मसाला", defaultUnit: "ग्राम" },
+            { name: "हींग", defaultUnit: "ग्राम" },
+            { name: "काली मिर्च", defaultUnit: "ग्राम" },
+            { name: "मेथी दाना", defaultUnit: "ग्राम" },
+            { name: "अजवाइन", defaultUnit: "ग्राम" },
+            { name: "कसूरी मेथी", defaultUnit: "पैकेट" },
+            { name: "चाट मसाला", defaultUnit: "पैकेट" },
+            { name: "किचन किंग मसाला", defaultUnit: "पैकेट" },
+            { name: "छोले/राजमा मसाला", defaultUnit: "पैकेट" },
+            { name: "अमचूर पाउडर", defaultUnit: "ग्राम" },
+            { name: "इमली", defaultUnit: "ग्राम" }
+        ],
+        "तेल/चीनी": [
+            { name: "सरसों तेल", defaultUnit: "लीटर" },
+            { name: "रिफाइंड तेल", defaultUnit: "लीटर" },
+            { name: "देशी घी", defaultUnit: "लीटर" },
+            { name: "चीनी", defaultUnit: "किलो" },
+            { name: "गुड़", defaultUnit: "किलो" },
+            { name: "चाय पत्ती", defaultUnit: "ग्राम" },
+            { name: "खांड / बूरा", defaultUnit: "किलो" },
+            { name: "शहद", defaultUnit: "पैकेट" },
+            { name: "कॉफी पाउडर", defaultUnit: "पैकेट" }
+        ],
+        "सूखे मेवे/बीज": [
+            { name: "भुने हुए चने", defaultUnit: "किलो" },
+            { name: "मखाने", defaultUnit: "पैकेट" },
+            { name: "किशमिश", defaultUnit: "ग्राम" },
+            { name: "बादाम", defaultUnit: "ग्राम" },
+            { name: "काजू", defaultUnit: "ग्राम" },
+            { name: "छुहारा / खजूर", defaultUnit: "किलो" },
+            { name: "नारियल गोला", defaultUnit: "पीस" },
+            { name: "मूंगफली दाना", defaultUnit: "किलो" },
+            { name: "अलसी", defaultUnit: "ग्राम" },
+            { name: "चिया सीड्स", defaultUnit: "ग्राम" },
+            { name: "कद्दू के बीज", defaultUnit: "ग्राम" },
+            { name: "तिल", defaultUnit: "ग्राम" },
+            { name: "इसबगोल", defaultUnit: "पैकेट" },
+            { name: "बिस्कुट / नमकीन", defaultUnit: "पैकेट" }
+        ],
+        "साबुन/सर्फ": [
+            { name: "नहाने का साबुन", defaultUnit: "पीस" },
+            { name: "कपड़े धोने का साबुन", defaultUnit: "पीस" },
+            { name: "सर्फ", defaultUnit: "किलो" },
+            { name: "डिशवॉश बार/लिक्विड", defaultUnit: "पीस" },
+            { name: "शैम्पू", defaultUnit: "पैकेट" },
+            { name: "टूथपेस्ट", defaultUnit: "पीस" },
+            { name: "टूथब्रश", defaultUnit: "पीस" },
+            { name: "हाथ धोने का साबुन", defaultUnit: "लीटर" },
+            { name: "कपड़े धोने का लिक्विड", defaultUnit: "लीटर" },
+            { name: "फिनाइल", defaultUnit: "लीटर" },
+            { name: "टॉयलेट क्लीनर", defaultUnit: "पीस" },
+            { name: "फ्लोर क्लीनर", defaultUnit: "लीटर" },
+            { name: "डिशवॉश स्पंज", defaultUnit: "पीस" }
+        ],
+        "अन्य": [
+            { name: "मच्छर भगाने की कॉइल/लिक्विड", defaultUnit: "पैकेट" },
+            { name: "माचिस", defaultUnit: "पैकेट" },
+            { name: "अगरबत्ती / धूपबत्ती", defaultUnit: "पैकेट" },
+            { name: "पूजा का कपूर / घी बत्ती", defaultUnit: "पैकेट" },
+            { name: "टिश्यू पेपर", defaultUnit: "पैकेट" },
+            { name: "एल्युमिनियम फॉयल", defaultUnit: "पीस" },
+            { name: "बेकिंग सोडा", defaultUnit: "पैकेट" },
+            { name: "कचरे के थैले", defaultUnit: "पैकेट" }
+        ],
+        "कैंटीन": [
+            { name: "कैंटीन सोप", defaultUnit: "पीस" },
+            { name: "कैंटीन तेल", defaultUnit: "लीटर" },
+            { name: "कैंटीन शैम्पू", defaultUnit: "पीस" },
+            { name: "कैंटीन बिस्कुट", defaultUnit: "पैकेट" },
+            { name: "कैंटीन टूथपेस्ट", defaultUnit: "पीस" },
+            { name: "कैंटीन ग्रोसरी", defaultUnit: "पैकेट" }
+        ]
+    };
+
+    let categoryItemsMap = JSON.parse(localStorage.getItem('MasterCategoryItemsMap')) || defaultCategoryItemsMap;
+
+    let currentMonthKey = document.getElementById('currentMonth').value;
+    let appData = JSON.parse(localStorage.getItem('MasterRationAppData')) || {};
+    let currentActiveTab = 'shoppingTab';
+    let tempBillData = '';
+
+    function switchTab(tabId, pushHistory = false) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        const buttons = document.querySelectorAll('.tab-btn');
+        if (tabId === 'shoppingTab') buttons[0].classList.add('active');
+        if (tabId === 'stockTab') buttons[1].classList.add('active');
+        if (tabId === 'maintenanceTab') buttons[2].classList.add('active');
+
+        currentActiveTab = tabId;
+        if (pushHistory) {
+            history.pushState({ tab: tabId }, "", "");
+        }
+    }
+
+    function getActiveData() {
+        if (!appData[currentMonthKey]) {
+            appData[currentMonthKey] = { shopping: [], stock: [], billImage: '', confirmedBillImage: '', date: '' };
+        }
+        if (!appData[currentMonthKey].shopping) appData[currentMonthKey].shopping = [];
+        if (!appData[currentMonthKey].stock) appData[currentMonthKey].stock = [];
+        return appData[currentMonthKey];
+    }
+
+    function changeMonth() {
+        currentMonthKey = document.getElementById('currentMonth').value;
+        const data = getActiveData();
+        document.getElementById('shoppingDate').value = data.date || '';
+        
+        populateCategoryDropdowns();
+        renderShoppingTable();
+        renderStockTable();
+        loadBillImage();
+    }
+
+    function populateCategoryDropdowns() {
+        const itemCategorySelect = document.getElementById('itemCategory');
+        const targetCategorySelect = document.getElementById('targetCategorySelect');
+        const editCategorySelect = document.getElementById('editCategorySelect');
+
+        itemCategorySelect.innerHTML = '<option value="" disabled selected>-- श्रेणी चुनें --</option>';
+        targetCategorySelect.innerHTML = '<option value="" disabled selected>-- श्रेणी चुनें --</option>';
+        editCategorySelect.innerHTML = '<option value="" disabled selected>-- श्रेणी चुनें --</option>';
+
+        for (let cat in categoryItemsMap) {
+            const opt1 = document.createElement('option');
+            opt1.value = cat;
+            opt1.textContent = cat;
+            itemCategorySelect.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = cat;
+            opt2.textContent = cat;
+            targetCategorySelect.appendChild(opt2);
+
+            const opt3 = document.createElement('option');
+            opt3.value = cat;
+            opt3.textContent = cat;
+            editCategorySelect.appendChild(opt3);
+        }
+
+        let itemNameSelect = document.getElementById('itemName');
+        itemNameSelect.innerHTML = '<option value="" disabled selected>-- पहले श्रेणी चुनें --</option>';
+
+        onMaintenanceCategoryChange();
+    }
+
+    function onEditCategorySelectChange() {
+        const editCat = document.getElementById('editCategorySelect').value;
+        document.getElementById('renameCategoryInput').value = editCat;
+    }
+
+    function renameCategory() {
+        const oldCat = document.getElementById('editCategorySelect').value;
+        const newCat = document.getElementById('renameCategoryInput').value.trim();
+
+        if (!oldCat) {
+            alert('कृपया बदलने के लिए कोई श्रेणी चुनें!');
+            return;
+        }
+        if (!newCat) {
+            alert('श्रेणी का नया नाम खाली नहीं हो सकता!');
+            return;
+        }
+        if (oldCat === newCat) {
+            alert('नया नाम पुराना नाम जैसा ही है!');
+            return;
+        }
+        if (categoryItemsMap[newCat]) {
+            alert('इस नाम की श्रेणी पहले से मौजूद है!');
+            return;
+        }
+
+        categoryItemsMap[newCat] = categoryItemsMap[oldCat];
+        delete categoryItemsMap[oldCat];
+
+        for (let mKey in appData) {
+            if (appData[mKey].shopping) {
+                appData[mKey].shopping.forEach(sItem => {
+                    if (sItem.category === oldCat) sItem.category = newCat;
+                });
+            }
+            if (appData[mKey].stock) {
+                appData[mKey].stock.forEach(stItem => {
+                    if (stItem.category === oldCat) stItem.category = newCat;
+                });
+            }
+        }
+
+        localStorage.setItem('MasterCategoryItemsMap', JSON.stringify(categoryItemsMap));
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+        
+        populateCategoryDropdowns();
+        renderShoppingTable();
+        renderStockTable();
+        alert(`श्रेणी का नाम बदलकर "${newCat}" कर दिया गया है!`);
+    }
+
+    function deleteCategory() {
+        const catToDelete = document.getElementById('editCategorySelect').value;
+        if (!catToDelete) {
+            alert('कृपया डिलीट करने के लिए कोई श्रेणी चुनें!');
+            return;
+        }
+
+        if (confirm(`चेतावनी: क्या आप वाकई श्रेणी "${catToDelete}" और इसके अंदर के सभी सामान हटाना चाहते हैं?`)) {
+            delete categoryItemsMap[catToDelete];
+            localStorage.setItem('MasterCategoryItemsMap', JSON.stringify(categoryItemsMap));
+            
+            populateCategoryDropdowns();
+            document.getElementById('renameCategoryInput').value = '';
+            alert('श्रेणी सफलतापूर्वक हटा दी गई है!');
+        }
+    }
+
+    function onMaintenanceCategoryChange() {
+        const targetCat = document.getElementById('targetCategorySelect').value;
+        const maintenanceItemList = document.getElementById('maintenanceItemList');
+        maintenanceItemList.innerHTML = '';
+
+        if (targetCat && categoryItemsMap[targetCat]) {
+            categoryItemsMap[targetCat].forEach((itemObj, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `${itemObj.name} (${itemObj.defaultUnit})`;
+                maintenanceItemList.appendChild(opt);
+            });
+        }
+    }
+
+    function onMaintenanceItemSelect() {
+        const targetCat = document.getElementById('targetCategorySelect').value;
+        const maintenanceItemList = document.getElementById('maintenanceItemList');
+        const selectedIdx = maintenanceItemList.value;
+
+        if (targetCat !== "" && selectedIdx !== "" && categoryItemsMap[targetCat][selectedIdx]) {
+            const itemObj = categoryItemsMap[targetCat][selectedIdx];
+            document.getElementById('newItemNameInput').value = itemObj.name;
+            const unitSelect = document.getElementById('newItemUnitSelect');
+            for (let i = 0; i < unitSelect.options.length; i++) {
+                if (unitSelect.options[i].value === itemObj.defaultUnit) {
+                    unitSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    function addNewCategory() {
+        const newCat = document.getElementById('newCategoryInput').value.trim();
+        if (!newCat) {
+            alert('कृपया नई श्रेणी का नाम दर्ज करें!');
+            return;
+        }
+        if (categoryItemsMap[newCat]) {
+            alert('यह श्रेणी पहले से मौजूद है!');
+            return;
+        }
+
+        categoryItemsMap[newCat] = [];
+        localStorage.setItem('MasterCategoryItemsMap', JSON.stringify(categoryItemsMap));
+        document.getElementById('newCategoryInput').value = '';
+        populateCategoryDropdowns();
+        alert(`नई श्रेणी "${newCat}" सफलतापूर्वक जोड़ दी गई है!`);
+    }
+
+    function addNewItemToCategory() {
+        const targetCat = document.getElementById('targetCategorySelect').value;
+        const newItemName = document.getElementById('newItemNameInput').value.trim();
+        const newItemUnit = document.getElementById('newItemUnitSelect').value;
+
+        if (!targetCat) {
+            alert('कृपया श्रेणी चुनें!');
+            return;
+        }
+        if (!newItemName) {
+            alert('कृपया सामान का नाम दर्ज करें!');
+            return;
+        }
+
+        let exists = categoryItemsMap[targetCat].some(item => item.name.toLowerCase() === newItemName.toLowerCase());
+        if (exists) {
+            alert('यह सामान इस श्रेणी में पहले से मौजूद है!');
+            return;
+        }
+
+        categoryItemsMap[targetCat].push({ name: newItemName, defaultUnit: newItemUnit });
+        localStorage.setItem('MasterCategoryItemsMap', JSON.stringify(categoryItemsMap));
+        
+        document.getElementById('newItemNameInput').value = '';
+        onMaintenanceCategoryChange();
+        alert(`सामान "${newItemName}" को "${targetCat}" श्रेणी में जोड़ दिया गया है!`);
+        
+        const currentSelectedCat = document.getElementById('itemCategory').value;
+        if (currentSelectedCat === targetCat) {
+            onCategoryChange();
+        }
+    }
+
+    function updateExistingItem() {
+        const targetCat = document.getElementById('targetCategorySelect').value;
+        const maintenanceItemList = document.getElementById('maintenanceItemList');
+        const selectedIdx = maintenanceItemList.value;
+        const updatedName = document.getElementById('newItemNameInput').value.trim();
+        const updatedUnit = document.getElementById('newItemUnitSelect').value;
+
+        if (!targetCat || selectedIdx === "") {
+            alert('कृपया मेंटेनेंस लिस्ट से कोई सामान चुनें जिसे एडिट करना है!');
+            return;
+        }
+        if (!updatedName) {
+            alert('सामान का नाम खाली नहीं हो सकता!');
+            return;
+        }
+
+        categoryItemsMap[targetCat][selectedIdx] = { name: updatedName, defaultUnit: updatedUnit };
+        localStorage.setItem('MasterCategoryItemsMap', JSON.stringify(categoryItemsMap));
+        
+        onMaintenanceCategoryChange();
+        alert('सामान सफलतापूर्वक अपडेट कर दिया गया है!');
+        
+        const currentSelectedCat = document.getElementById('itemCategory').value;
+        if (currentSelectedCat === targetCat) {
+            onCategoryChange();
+        }
+    }
+
+    function deleteSelectedItem() {
+        const targetCat = document.getElementById('targetCategorySelect').value;
+        const maintenanceItemList = document.getElementById('maintenanceItemList');
+        const selectedIdx = maintenanceItemList.value;
+
+        if (!targetCat || selectedIdx === "") {
+            alert('कृपया डिलीट करने के लिए लिस्ट से कोई सामान चुनें!');
+            return;
+        }
+
+        let itemName = categoryItemsMap[targetCat][selectedIdx].name;
+        if (confirm(`क्या आप वाकई "${itemName}" को हटाना चाहते हैं?`)) {
+            categoryItemsMap[targetCat].splice(selectedIdx, 1);
+            localStorage.setItem('MasterCategoryItemsMap', JSON.stringify(categoryItemsMap));
+            
+            document.getElementById('newItemNameInput').value = '';
+            onMaintenanceCategoryChange();
+            alert('सामान सफलतापूर्वक हटा दिया गया है!');
+
+            const currentSelectedCat = document.getElementById('itemCategory').value;
+            if (currentSelectedCat === targetCat) {
+                onCategoryChange();
+            }
+        }
+    }
+
+    function saveDate() {
+        const data = getActiveData();
+        data.date = document.getElementById('shoppingDate').value;
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+    }
+
+    function onCategoryChange() {
+        const selectedCat = document.getElementById('itemCategory').value;
+        const itemNameSelect = document.getElementById('itemName');
+        
+        itemNameSelect.innerHTML = '<option value="" disabled selected>-- सामान चुनें --</option>';
+        if (categoryItemsMap[selectedCat]) {
+            categoryItemsMap[selectedCat].forEach(itemObj => {
+                const opt = document.createElement('option');
+                opt.value = itemObj.name;
+                opt.textContent = itemObj.name;
+                opt.setAttribute('data-unit', itemObj.defaultUnit);
+                itemNameSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function onItemNameChange() {
+        const itemNameSelect = document.getElementById('itemName');
+        const selectedOption = itemNameSelect.options[itemNameSelect.selectedIndex];
+        const defaultUnit = selectedOption.getAttribute('data-unit');
+        if (defaultUnit) {
+            const unitSelect = document.getElementById('itemUnit');
+            for (let i = 0; i < unitSelect.options.length; i++) {
+                if (unitSelect.options[i].value === defaultUnit) {
+                    unitSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    function addShoppingItem() {
+        const category = document.getElementById('itemCategory').value;
+        const name = document.getElementById('itemName').value;
+        const unit = document.getElementById('itemUnit').value;
+        const qty = parseFloat(document.getElementById('itemQty').value) || 1;
+
+        if (!category) {
+            alert('कृपया पहले श्रेणी (Category) चुनें!');
+            return;
+        }
+        if (!name) {
+            alert('कृपया सामान का नाम चुनें!');
+            return;
+        }
+
+        const data = getActiveData();
+        data.shopping.push({ 
+            id: Date.now() + Math.random(), 
+            category, 
+            name, 
+            qty, 
+            unit, 
+            price: 0, 
+            status: 'अभी नहीं खरीदा', 
+            checked: false 
+        });
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+
+        let selectedCat = document.getElementById('itemCategory').value;
+        let itemNameSelect = document.getElementById('itemName');
+        itemNameSelect.innerHTML = '<option value="" disabled selected>-- सामान चुनें --</option>';
+        if (categoryItemsMap[selectedCat]) {
+            categoryItemsMap[selectedCat].forEach(itemObj => {
+                const opt = document.createElement('option');
+                opt.value = itemObj.name;
+                opt.textContent = itemObj.name;
+                opt.setAttribute('data-unit', itemObj.defaultUnit);
+                itemNameSelect.appendChild(opt);
+            });
+        }
+
+        document.getElementById('itemQty').value = '1';
+        renderShoppingTable();
+    }
+
+    function updateItemPrice(id, priceVal) {
+        const data = getActiveData();
+        const item = data.shopping.find(i => i.id == id);
+        if (item) {
+            item.price = parseFloat(priceVal) || 0;
+            localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+            calculateTotalExpense();
+        }
+    }
+
+    function updateItemStatus(id, statusVal) {
+        const data = getActiveData();
+        const item = data.shopping.find(i => i.id == id);
+        if (item) {
+            item.status = statusVal;
+            if (statusVal === 'खरीद लिया गया') {
+                item.checked = true;
+            } else {
+                item.checked = false;
+            }
+            localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+            renderShoppingTable();
+        }
+    }
+
+    function toggleCheck(id) {
+        const data = getActiveData();
+        const item = data.shopping.find(i => i.id == id);
+        if (item) {
+            item.checked = !item.checked;
+            if (item.checked) {
+                item.status = 'खरीद लिया गया';
+            } else {
+                item.status = 'अभी नहीं खरीदा';
+            }
+            localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+            renderShoppingTable();
+        }
+    }
+
+    function deleteShoppingItem(id) {
+        const data = getActiveData();
+        data.shopping = data.shopping.filter(i => i.id != id);
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+        renderShoppingTable();
+    }
+
+    function calculateTotalExpense() {
+        const data = getActiveData();
+        let total = data.shopping.reduce((sum, item) => {
+            if (item.checked) {
+                return sum + (Number(item.price) || 0);
+            }
+            return sum;
+        }, 0);
+        document.getElementById('totalExpenseDisplay').innerHTML = `₹${total}`;
+    }
+
+    function renderShoppingTable() {
+        const data = getActiveData();
+        const groceryBody = document.getElementById('groceryTableBody');
+        const generalBody = document.getElementById('generalTableBody');
+        const canteenBody = document.getElementById('canteenTableBody');
+
+        groceryBody.innerHTML = '';
+        generalBody.innerHTML = '';
+        canteenBody.innerHTML = '';
+
+        let groceryCount = 0, generalCount = 0, canteenCount = 0;
+
+        data.shopping.forEach(item => {
+            const tr = document.createElement('tr');
+            if (item.checked) tr.classList.add('checked-row');
+
+            tr.innerHTML = `
+                <td><input type="checkbox" ${item.checked ? 'checked' : ''} onclick="toggleCheck(${item.id})"></td>
+                <td style="font-size: 11px; background: #f1f5f9; padding: 2px 4px; border-radius: 4px;">${item.category}</td>
+                <td style="text-align: left; padding-left: 6px; font-weight: 500;">${item.name}</td>
+                <td>${item.qty} ${item.unit}</td>
+                <td><input type="number" value="${item.price || 0}" oninput="updateItemPrice(${item.id}, this.value)" style="width: 65px; padding: 4px; text-align: center;"></td>
+                <td>
+                    <select onchange="updateItemStatus(${item.id}, this.value)" style="padding: 4px; font-size: 12px; background: ${item.status === 'खरीद लिया गया' ? '#d1fae5' : '#fff'}; font-weight: 500;">
+                        <option value="अभी नहीं खरीदा" ${item.status === 'अभी नहीं खरीदा' ? 'selected' : ''}>अभी नहीं खरीदा</option>
+                        <option value="खरीद लिया गया" ${item.status === 'खरीद लिया गया' ? 'selected' : ''}>खरीद लिया गया</option>
+                    </select>
+                </td>
+                <td><button class="btn-danger" onclick="deleteShoppingItem(${item.id})">×</button></td>
+            `;
+
+            if (item.category === "कैंटीन") {
+                canteenBody.appendChild(tr);
+                canteenCount++;
+            } else if (["साबुन/सर्फ", "अन्य"].includes(item.category)) {
+                generalBody.appendChild(tr);
+                generalCount++;
+            } else {
+                groceryBody.appendChild(tr);
+                groceryCount++;
+            }
+        });
+
+        if (groceryCount === 0) groceryBody.innerHTML = `<tr><td colspan="7" style="color: #888;">कोई सामान नहीं जुड़ा है</td></tr>`;
+        if (generalCount === 0) generalBody.innerHTML = `<tr><td colspan="7" style="color: #888;">कोई सामान नहीं जुड़ा है</td></tr>`;
+        if (canteenCount === 0) canteenBody.innerHTML = `<tr><td colspan="7" style="color: #888;">कोई सामान नहीं जुड़ा है</td></tr>`;
+
+        calculateTotalExpense();
+    }
+
+    function previewBillImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempBillData = e.target.result;
+                const preview = document.getElementById('billPreview');
+                preview.src = tempBillData;
+                preview.style.display = 'block';
+                document.getElementById('billActionBox').style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function previewStockBillImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = getActiveData();
+                data.confirmedBillImage = e.target.result;
+                localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+                loadBillImage();
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function deleteStockBillImage() {
+        const data = getActiveData();
+        data.confirmedBillImage = '';
+        data.billImage = '';
+        tempBillData = '';
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+        document.getElementById('stockBillInput').value = '';
+        loadBillImage();
+        alert('स्टॉक का बिल हटा दिया गया है।');
+    }
+
+    function deleteBillImage() {
+        tempBillData = '';
+        const data = getActiveData();
+        data.billImage = '';
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+        document.getElementById('billImageInput').value = '';
+        loadBillImage();
+        alert('बिल की फोटो हटा दी गई है।');
+    }
+
+    function loadBillImage() {
+        const data = getActiveData();
+        const preview = document.getElementById('billPreview');
+        const savedView = document.getElementById('savedBillView');
+        const actionBox = document.getElementById('billActionBox');
+        const stockActionBox = document.getElementById('stockBillActionBox');
+
+        if (data.confirmedBillImage) {
+            savedView.src = data.confirmedBillImage;
+            savedView.style.display = 'block';
+            if (stockActionBox) stockActionBox.style.display = 'block';
+        } else {
+            savedView.style.display = 'none';
+            if (stockActionBox) stockActionBox.style.display = 'none';
+        }
+
+        if (data.billImage) {
+            preview.src = data.billImage;
+            preview.style.display = 'block';
+            actionBox.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+            actionBox.style.display = 'none';
+        }
+    }
+
+    function transferToStock() {
+        const data = getActiveData();
+        if (data.shopping.length === 0) {
+            alert('शॉपिंग लिस्ट खाली है!');
+            return;
+        }
+
+        let purchasedItems = data.shopping.filter(item => item.checked);
+
+        if (purchasedItems.length === 0) {
+            alert('कृपया पहले कम से कम एक सामान पर टिक (खरीद लिया गया) करें जिसे स्टॉक में जोड़ना है!');
+            return;
+        }
+
+        if (tempBillData) {
+            data.confirmedBillImage = tempBillData;
+            data.billImage = tempBillData;
+            tempBillData = ''; 
+        }
+
+        purchasedItems.forEach(shopItem => {
+            let existingStock = data.stock.find(s => s.name === shopItem.name);
+            if (existingStock) {
+                existingStock.addedQty = (parseFloat(existingStock.addedQty) || 0) + parseFloat(shopItem.qty);
+            } else {
+                data.stock.push({
+                    name: shopItem.name,
+                    category: shopItem.category,
+                    remainingQty: 0,
+                    addedQty: shopItem.qty,
+                    unit: shopItem.unit
+                });
+            }
+        });
+
+        data.shopping.sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? 1 : -1);
+
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+        alert('खरीदे गए सामान सफलतापूर्वक स्टॉक में जोड़ दिए गए हैं!');
+        switchTab('stockTab', true);
+        renderStockTable();
+        loadBillImage();
+    }
+
+    function renderStockTable() {
+        const data = getActiveData();
+        const tbody = document.getElementById('stockTableBody');
+        tbody.innerHTML = '';
+
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        let filteredStock = data.stock.filter(item => item.name.toLowerCase().includes(searchQuery));
+
+        if (filteredStock.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color: #888;">स्टॉक में कोई सामान उपलब्ध नहीं है</td></tr>`;
+            return;
+        }
+
+        filteredStock.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 500; text-align: left; padding-left: 6px;">${item.name}</td>
+                <td><span style="font-size: 11px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${item.category}</span></td>
+                <td><input type="number" step="any" value="${item.remainingQty || 0}" oninput="updateStockValues(${index}, 'remaining', this.value)" style="width: 70px; padding: 4px; text-align: center;"> ${item.unit}</td>
+                <td><input type="number" step="any" value="${item.addedQty || 0}" oninput="updateStockValues(${index}, 'added', this.value)" style="width: 70px; padding: 4px; text-align: center;"> ${item.unit}</td>
+                <td style="font-weight: bold; color: var(--primary);">${(parseFloat(item.remainingQty || 0) + parseFloat(item.addedQty || 0))} ${item.unit}</td>
+                <td><button class="btn-danger" onclick="deleteStockItem(${index})">×</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateStockValues(index, type, val) {
+        const data = getActiveData();
+        if (type === 'remaining') {
+            data.stock[index].remainingQty = val;
+        } else {
+            data.stock[index].addedQty = val;
+        }
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+    }
+
+    function deleteStockItem(index) {
+        const data = getActiveData();
+        data.stock.splice(index, 1);
+        localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+        renderStockTable();
+    }
+
+    function clearCurrentMonthData() {
+        let confirmDelete = confirm("⚠️ चेतावनी: क्या आप वाकई वर्तमान महीने का पूरा डेटा साफ़ करना चाहते हैं?");
+        if (confirmDelete) {
+            let pwd = prompt("सुरक्षा के लिए पासवर्ड दर्ज करें:");
+            if (pwd === "1234") {
+                if (appData[currentMonthKey]) {
+                    delete appData[currentMonthKey];
+                    localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+                    changeMonth();
+                    alert("वर्तमान महीने का डेटा सफलतापूर्वक साफ़ कर दिया गया है।");
+                }
+            } else {
+                alert("गलत पासवर्ड! डेटा साफ़ नहीं किया गया।");
+            }
+        }
+    }
+
+    function clearAllAppData() {
+        let confirmDelete = confirm("🚨 चेतावनी: क्या आप वाकई संपूर्ण ऐप का सारा डेटा साफ़ करना चाहते हैं? यह वापस नहीं आएगा!");
+        if (confirmDelete) {
+            let pwd = prompt("सुरक्षा के लिए मास्टर पासवर्ड दर्ज करें:");
+            if (pwd === "1234") {
+                localStorage.removeItem('MasterRationAppData');
+                appData = {};
+                changeMonth();
+                alert("संपूर्ण ऐप का डेटा साफ़ कर दिया गया है।");
+            } else {
+                alert("गलत पासवर्ड! डेटा साफ़ नहीं किया गया।");
+            }
+        }
+    }
+
+    function shareShoppingWhatsApp() {
+        const data = getActiveData();
+        if (data.shopping.length === 0) {
+            alert('शेयर करने के लिए लिस्ट खाली है!');
+            return;
+        }
+
+        let text = `🛒 *मासिक राशन लिस्ट (${document.getElementById('currentMonth').selectedOptions[0].text})* 🛒\n\n`;
+        let catMap = {};
+
+        data.shopping.forEach(item => {
+            if (!catMap[item.category]) catMap[item.category] = [];
+            catMap[item.category].push(`• ${item.name} - ${item.qty} ${item.unit}`);
+        });
+
+        for (let cat in catMap) {
+            text += `*--- ${cat} ---*\n`;
+            text += catMap[cat].join('\n') + `\n\n`;
+        }
+
+        const encoded = encodeURIComponent(text);
+        window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    function shareStockWhatsApp() {
+        const data = getActiveData();
+        if (data.stock.length === 0) {
+            alert('शेयर करने के लिए स्टॉक खाली है!');
+            return;
+        }
+
+        let text = `📦 *घर का स्टॉक (${document.getElementById('currentMonth').selectedOptions[0].text})* 📦\n\n`;
+        let catMap = {};
+
+        data.stock.forEach(item => {
+            let total = (parseFloat(item.remainingQty || 0) + parseFloat(item.addedQty || 0));
+            if (!catMap[item.category]) catMap[item.category] = [];
+            catMap[item.category].push(`• ${item.name} - ${total} ${item.unit}`);
+        });
+
+        for (let cat in catMap) {
+            text += `*--- ${cat} ---*\n`;
+            text += catMap[cat].join('\n') + `\n\n`;
+        }
+
+        const encoded = encodeURIComponent(text);
+        window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    function exportJSON() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", `RationManager_Backup_${currentMonthKey}.json`);
+        document.body.appendChild(dlAnchorElem);
+        dlAnchorElem.click();
+        dlAnchorElem.remove();
+    }
+
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    appData = JSON.parse(e.target.result);
+                    localStorage.setItem('MasterRationAppData', JSON.stringify(appData));
+                    changeMonth();
+                    alert('डेटा सफलतापूर्वक रीस्टोर (Restore) हो गया है!');
+                } catch (err) {
+                    alert('ERR_FILE_NOT_FOUND या अमान्य JSON फ़ाइल!');
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    window.onload = function() {
+        changeMonth();
+        switchTab('shoppingTab', false);
+    };
+
+    window.onpopstate = function(event) {
+        if (event.state && event.state.tab) {
+            switchTab(event.state.tab, false);
+        }
+    };
+</script>
+
+</body>
+</html>
